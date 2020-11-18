@@ -1,0 +1,18 @@
+#creating hive table with schema
+
+sqoop import -Dmapreduce.job.user.classpath.first=true --connect jdbc:mysql://localhost/custpayments \
+--username root --password root -table customers -m 3 --split-by customernumber \
+--target-dir /user/hduser/custavro --delete-target-dir --as-avrodatafile;
+
+
+hadoop jar avro-tools-1.8.1.jar getschema /user/hduser/custavro/part-m-00000.avro > /home/hduser/customer.avsc
+
+cat ~/customer.avsc
+
+hadoop fs -put -f customer.avsc /tmp/customer.avsc
+
+
+create external table customeravro 
+stored as AVRO 
+location '/user/hduser/custavro' 
+TBLPROPERTIES('avro.schema.url'='hdfs:///tmp/customer.avsc');
